@@ -2,7 +2,9 @@ package main
 
 import (
 	"database/sql"
+	"html/template"
 	"log"
+	"net/http"
 	"os"
 	"path/filepath"
 	"time"
@@ -81,4 +83,25 @@ func NewApp(database string) *Application {
 	}
 
 	return &Application{db: conn}
+}
+
+// Index handles the HTTP requests to the root of the website.
+func (app *Application) Index(w http.ResponseWriter, r *http.Request) {
+	data := struct {
+		Time int64
+	}{
+		Time: time.Now().Unix(),
+	}
+
+	t, err := template.ParseFiles("views/index.tpl")
+
+	if err != nil {
+		log.Println("Template.Parse:", err)
+		http.Error(w, "Internal Server Error 0x0178", http.StatusInternalServerError)
+	}
+
+	if err := t.Execute(w, data); err != nil {
+		log.Println("Template.Execute:", err)
+		http.Error(w, "Internal Server Error 0x0183", http.StatusInternalServerError)
+	}
 }
