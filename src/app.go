@@ -2,6 +2,9 @@ package main
 
 import (
 	"database/sql"
+	"log"
+	"os"
+	"path/filepath"
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -45,4 +48,37 @@ type ReviewPublic struct {
 	ShortDate string `json:"shortdate"`
 	Comment   string `json:"comment"`
 	Score     int    `json:"score"`
+}
+
+// NewApp creates a new instance of the application.
+func NewApp(database string) *Application {
+	folder := filepath.Dir(os.Args[0]) /* go 1.7.5 */
+	conn, err := sql.Open("sqlite3", folder+"/"+database)
+
+	if err != nil {
+		log.Fatal("SQLite open; ", err)
+		return &Application{}
+	}
+
+	log.Println("Database:", folder+"/"+database)
+
+	query := `
+	CREATE TABLE IF NOT EXISTS reviews (
+		id INTEGER PRIMARY KEY,
+		uid TEXT,
+		name TEXT,
+		email TEXT,
+		rating INTEGER,
+		comment TEXT,
+		approved INTEGER,
+		timestamp TIMESTAMP
+	);
+	`
+
+	if _, err := conn.Exec(query); err != nil {
+		log.Fatal("Database setup; ", err)
+		return &Application{}
+	}
+
+	return &Application{db: conn}
 }
