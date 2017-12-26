@@ -105,3 +105,24 @@ func (app *Application) Index(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error 0x0183", http.StatusInternalServerError)
 	}
 }
+
+// Admin handles the HTTP requests to the admin interface.
+func (app *Application) Admin(w http.ResponseWriter, r *http.Request) {
+	data := struct {
+		Time int64
+	}{
+		Time: time.Now().Unix(),
+	}
+
+	t, err := template.ParseFiles("views/index.tpl")
+
+	if err != nil {
+		log.Println("Template.Parse:", err)
+		http.Error(w, "Internal Server Error 0x0178", http.StatusInternalServerError)
+	}
+
+	if err := t.Execute(w, data); err != nil {
+		log.Println("Template.Execute:", err)
+		http.Error(w, "Internal Server Error 0x0183", http.StatusInternalServerError)
+	}
+}
