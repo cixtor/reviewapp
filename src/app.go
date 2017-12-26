@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"encoding/json"
 	"html/template"
 	"log"
 	"net/http"
@@ -125,4 +126,50 @@ func (app *Application) Admin(w http.ResponseWriter, r *http.Request) {
 		log.Println("Template.Execute:", err)
 		http.Error(w, "Internal Server Error 0x0183", http.StatusInternalServerError)
 	}
+}
+
+// ReviewsList responds with a list of reviews for a specific product.
+func (app *Application) ReviewsList(w http.ResponseWriter, r *http.Request) {
+	uid := r.URL.Query().Get("uid")
+	query := "SELECT * FROM reviews WHERE UID = ? AND approved = ? ORDER BY timestamp DESC"
+	rows, err := app.db.Query(query, uid, approvedReview)
+
+	if err != nil {
+		log.Println("reviews list;", err)
+		http.Error(w, "cannot retrieve reviews", http.StatusInternalServerError)
+		return
+	}
+
+	defer rows.Close()
+
+	var item Review
+	var list Reviews
+
+	for rows.Next() {
+		item = Review{}
+
+		if err := rows.Scan(
+			&item.ID,
+			&item.UID,
+			&item.Name,
+			&item.Email,
+			&item.Rating,
+			&item.Comment,
+			&item.Approved,
+			&item.Timestamp); err != nil {
+			log.Println("read review;", err)
+			continue
+		}
+
+		list = append(list, ReviewPublic{
+			ID:        item.ID,
+			Name:      item.Name,
+			Avatar:    app.Gravatar(item.Email),
+			ShortDate: item.Timestamp.Format(`Jan 02, 2006`),
+			Score:     item.Rating,
+			Comment:   item.Comment,
+		})
+	}
+
+	json.NewEncoder(w).Encode(Response{OK: true, Data: list})
 }
