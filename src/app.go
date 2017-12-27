@@ -1,13 +1,17 @@
 package main
 
 import (
+	"crypto/md5"
 	"database/sql"
+	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"html/template"
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -172,4 +176,62 @@ func (app *Application) ReviewsList(w http.ResponseWriter, r *http.Request) {
 	}
 
 	json.NewEncoder(w).Encode(Response{OK: true, Data: list})
+}
+
+// ReviewsSave responds with a list of reviews for a specific product.
+func (app *Application) ReviewsSave(w http.ResponseWriter, r *http.Request) {
+	stmt, err := app.db.Prepare(
+		`INSERT INTO reviews (uid, name, email, rating, comment,
+		approved, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?)`)
+
+	if err != nil {
+		log.Println("review insert;", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	r.ParseForm()
+
+	var rating int
+	ratingStr := r.Form.Get("rating")
+	ratingNum, err := strconv.Atoi(ratingStr)
+	if err != nil {
+		log.Println("invalid rating;", ratingStr, err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if ratingNum < 0 {
+		rating = 0
+	} else if ratingNum > 10 {
+		rating = 10
+	} else {
+		rating = ratingNum
+	}
+
+	if _, err := stmt.Exec(
+		r.Form.Get("uid"),
+		r.Form.Get("name"),
+		r.Form.Get("email"),
+		rating,
+		r.Form.Get("comment"),
+		notApprovedReview,
+		time.Now()); err != nil {
+		log.Println("broken sql;", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	json.NewEncoder(w).Encode(Response{
+		OK:  true,
+		Msg: "Review submitted, waiting for approval.",
+	})
+}
+
+// Gravatar returns the URL to the image to identify an user.
+func (app Application) Gravatar(email string) string {
+	hasher := md5.New()
+	hasher.Write([]byte(email))
+	result := hex.EncodeToString(hasher.Sum(nil))
+	return fmt.Sprintf("https://www.gravatar.com/avatar/%s", result)
 }
