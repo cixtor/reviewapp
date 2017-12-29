@@ -12,44 +12,40 @@ Application.prototype.data = {
 
 Application.prototype.created = function() {
     /**
-     * Disregard VueRouter
-     *
-     * Apparently there is a plugin for Vue called VueRouter that can be
-     * attached to the "router" property of the Vue instance to control the
-     * application routes and to query the GET parameters. However, after
-     * +30 minutes reading the documentation and dabbling with different
-     * versions of the code, I was not able to make it work, and since Go
-     * can already handle routes very well I suppose there is no point on
-     * trying to make this part of the code fancy.
-     *
-     * @example console.log(this.$route.query.test);
-     */
+	 * Disregard VueRouter
+	 *
+	 * Apparently there is a plugin for Vue called VueRouter that can be
+	 * attached to the "router" property of the Vue instance to control the
+	 * application routes and to query the GET parameters. However, after
+	 * +30 minutes reading the documentation and dabbling with different
+	 * versions of the code, I was not able to make it work, and since Go
+	 * can already handle routes very well I suppose there is no point on
+	 * trying to make this part of the code fancy.
+	 *
+	 * @example console.log(this.$route.query.test);
+	 */
     var app = this;
     var uid = this.queryURL('uid');
 
     fetch('/reviews/list?uid=' + uid, { method: 'GET' })
         .then(function(res) {
             if (!res.ok) {
-                console.log(
-                    res.status + '\x20' + res.statusText + '\x20-\x20' + res.url
-                );
+                window.alert(res.status + '\x20' + res.statusText + '\x20-\x20' + res.url);
                 return;
             }
 
             res.json().then(function(body) {
                 for (var key in body.data) {
                     if (body.data.hasOwnProperty(key)) {
-                        console.log(body.data[key]);
                         body.data[key].cssScore = 'review-stars-score';
-                        body.data[key].cssScoreNum =
-                            'review-stars-score-' + body.data[key].score;
+                        body.data[key].cssScoreNum = 'review-stars-score-' + body.data[key].score;
                         app.reviews.push(body.data[key]);
                     }
                 }
             });
         })
         .catch(function(err) {
-            console.log('reviews.uid', err);
+            window.alert('reviews.uid', err);
         });
 };
 
@@ -71,21 +67,21 @@ Application.prototype.methods = {
 
     queryURL: function(query) {
         /**
-         * Hardcodes product unique identifier.
-         *
-         * Since the purpose of this coding challenge is to demonstrate my
-         * skills in Go more than any other technology (although it was
-         * suggested to use a JavaScript framework) I am hardcoding this UID as
-         * the identifier for the product that is going to be reviewed. In a
-         * product ready application, this page should not be loaded at all as
-         * the Index, we are assuming that the ID will come through a GET
-         * parameter but in this example we don't have access to the interface
-         * that will be sending the request, so we can only speculate what data
-         * will actually be coming, lets hardcode this piece of data for
-         * simplicity.
-         *
-         * @var string
-         */
+		 * Hardcodes product unique identifier.
+		 *
+		 * Since the purpose of this coding challenge is to demonstrate my
+		 * skills in Go more than any other technology (although it was
+		 * suggested to use a JavaScript framework) I am hardcoding this UID as
+		 * the identifier for the product that is going to be reviewed. In a
+		 * product ready application, this page should not be loaded at all as
+		 * the Index, we are assuming that the ID will come through a GET
+		 * parameter but in this example we don't have access to the interface
+		 * that will be sending the request, so we can only speculate what data
+		 * will actually be coming, lets hardcode this piece of data for
+		 * simplicity.
+		 *
+		 * @var string
+		 */
         if (query === 'uid') {
             return 'F79MEIM7';
         }
@@ -102,11 +98,7 @@ Application.prototype.methods = {
     jsonToQuery: function(json) {
         return Object.keys(json)
             .map(function(key) {
-                return (
-                    encodeURIComponent(key) +
-                    '=' +
-                    encodeURIComponent(json[key])
-                );
+                return encodeURIComponent(key) + '=' + encodeURIComponent(json[key]);
             })
             .join('&');
     },
@@ -133,8 +125,7 @@ Application.prototype.methods = {
         for (var key in event.target.elements) {
             if (event.target.elements.hasOwnProperty(key)) {
                 if (event.target.elements[key].name !== '') {
-                    data[event.target.elements[key].name] =
-                        event.target.elements[key].value;
+                    data[event.target.elements[key].name] = event.target.elements[key].value;
                 }
             }
         }
@@ -148,16 +139,11 @@ Application.prototype.methods = {
             }
         }).then(function(res) {
             if (res.ok) {
-                document
-                    .getElementById('reviewform-form')
-                    .classList.add('d-none');
-                document
-                    .getElementById('reviewform-alert')
-                    .classList.remove('d-none');
+                document.getElementById('reviewform-form').classList.add('d-none');
+                document.getElementById('reviewform-alert').classList.remove('d-none');
 
                 res.json().then(function(body) {
-                    document.getElementById('reviewform-alert').innerHTML =
-                        '<p>' + body.msg + '</p>';
+                    document.getElementById('reviewform-alert').innerHTML = '<p>' + body.msg + '</p>';
                 });
             }
         });
