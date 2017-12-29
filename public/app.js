@@ -1,7 +1,6 @@
-
 /* global Vue */
 
-var Application = function () {}
+var Application = function() {};
 
 Application.prototype.el = '#reviewapp';
 
@@ -28,29 +27,34 @@ Application.prototype.created = function() {
     var app = this;
     var uid = this.queryURL('uid');
 
-    fetch('/reviews/list?uid=' + uid, {method: 'GET'}).then(function (res) {
-        if (!res.ok) {
-            console.log(res.status + '\x20' + res.statusText + '\x20-\x20' + res.url);
-            return;
-        }
-
-        res.json().then(function (body) {
-            for (var key in body.data) {
-                if (body.data.hasOwnProperty(key)) {
-                    console.log(body.data[key])
-                    body.data[key].cssScore = 'review-stars-score';
-                    body.data[key].cssScoreNum = 'review-stars-score-' + body.data[key].score;
-                    app.reviews.push(body.data[key]);
-                }
+    fetch('/reviews/list?uid=' + uid, { method: 'GET' })
+        .then(function(res) {
+            if (!res.ok) {
+                console.log(
+                    res.status + '\x20' + res.statusText + '\x20-\x20' + res.url
+                );
+                return;
             }
+
+            res.json().then(function(body) {
+                for (var key in body.data) {
+                    if (body.data.hasOwnProperty(key)) {
+                        console.log(body.data[key]);
+                        body.data[key].cssScore = 'review-stars-score';
+                        body.data[key].cssScoreNum =
+                            'review-stars-score-' + body.data[key].score;
+                        app.reviews.push(body.data[key]);
+                    }
+                }
+            });
+        })
+        .catch(function(err) {
+            console.log('reviews.uid', err);
         });
-    }).catch(function (err) {
-        console.log('reviews.uid', err);
-    });
 };
 
 Application.prototype.methods = {
-    queryParams: function () {
+    queryParams: function() {
         var params = {};
         var parts = [];
         var parameters = location.search.replace(/\?/, '').split('&');
@@ -65,7 +69,7 @@ Application.prototype.methods = {
         return params;
     },
 
-    queryURL: function (query) {
+    queryURL: function(query) {
         /**
          * Hardcodes product unique identifier.
          *
@@ -95,28 +99,33 @@ Application.prototype.methods = {
         return params[query];
     },
 
-    jsonToQuery: function (json) {
-        return Object.keys(json).map(function(key) {
-            return encodeURIComponent(key) + '=' +
-            encodeURIComponent(json[key]);
-        }).join('&');
+    jsonToQuery: function(json) {
+        return Object.keys(json)
+            .map(function(key) {
+                return (
+                    encodeURIComponent(key) +
+                    '=' +
+                    encodeURIComponent(json[key])
+                );
+            })
+            .join('&');
     },
 
-    showReviewForm: function () {
+    showReviewForm: function() {
         document.getElementById('reviewlist').classList.add('d-none');
         document.getElementById('reviewform').classList.remove('d-none');
         document.getElementById('reviewform-alert').classList.add('d-none');
         document.getElementById('reviewform-form').classList.remove('d-none');
     },
 
-    hideReviewForm: function () {
+    hideReviewForm: function() {
         document.getElementById('reviewform').classList.add('d-none');
         document.getElementById('reviewlist').classList.remove('d-none');
         document.getElementById('reviewform-alert').classList.add('d-none');
         document.getElementById('reviewform-form').classList.remove('d-none');
     },
 
-    submitReview: function (event) {
+    submitReview: function(event) {
         var data = {};
 
         data.uid = this.queryURL('uid');
@@ -124,7 +133,8 @@ Application.prototype.methods = {
         for (var key in event.target.elements) {
             if (event.target.elements.hasOwnProperty(key)) {
                 if (event.target.elements[key].name !== '') {
-                    data[event.target.elements[key].name] = event.target.elements[key].value;
+                    data[event.target.elements[key].name] =
+                        event.target.elements[key].value;
                 }
             }
         }
@@ -133,17 +143,21 @@ Application.prototype.methods = {
             method: 'POST',
             body: this.jsonToQuery(data),
             headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/x-www-form-urlencoded',
+                Accept: 'application/json',
+                'Content-Type': 'application/x-www-form-urlencoded'
             }
-        }).then(function (res) {
+        }).then(function(res) {
             if (res.ok) {
-                document.getElementById('reviewform-form').classList.add('d-none');
-                document.getElementById('reviewform-alert').classList.remove('d-none');
+                document
+                    .getElementById('reviewform-form')
+                    .classList.add('d-none');
+                document
+                    .getElementById('reviewform-alert')
+                    .classList.remove('d-none');
 
-                res.json().then(function (body) {
-                    document.getElementById('reviewform-alert')
-                    .innerHTML = '<p>' + body.msg + '</p>';
+                res.json().then(function(body) {
+                    document.getElementById('reviewform-alert').innerHTML =
+                        '<p>' + body.msg + '</p>';
                 });
             }
         });
